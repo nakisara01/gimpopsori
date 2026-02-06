@@ -23,7 +23,21 @@ struct InitialView: View {
                 Image("GimPopSori_Logo")
                     .resizable()
                     .scaledToFit()
-                    .padding(.horizontal, 200)
+                    .padding(.horizontal, 100)
+                
+                Button(action: {}, label: {
+                    ZStack {
+                        Image("Button")
+                            .resizable()
+                            .scaledToFill()
+                        Text("Start")
+                            .foregroundStyle(Color.black)
+                            .font(Font.largeTitle.bold())
+                    }
+                })
+                .padding(.horizontal, 500)
+                .padding(.top, 100)
+                .padding(.bottom, 300)
             }
         }
     }
