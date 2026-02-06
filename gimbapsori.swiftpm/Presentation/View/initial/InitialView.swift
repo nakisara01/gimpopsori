@@ -32,7 +32,8 @@ struct InitialView: View {
                             .scaledToFill()
                         Text("Start")
                             .foregroundStyle(Color.black)
-                            .font(Font.largeTitle.bold())
+                            .font(.cursive(.bold, size: 90))
+                            .padding(.top, 30)
                     }
                 })
                 .padding(.horizontal, 500)
