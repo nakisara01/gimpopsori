@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct InitialView: View {
-    var backgroundColor: Color = .brown
+    let router: Router
     
     var body: some View {
         ZStack{
@@ -27,7 +27,9 @@ struct InitialView: View {
                     .scaledToFit()
                     .padding(.horizontal, 100)
                 
-                Button(action: {}, label: {
+                Button(action: {
+                    router.push(.main)
+                }, label: {
                     ZStack {
                         Image("Button")
                             .resizable()
@@ -47,5 +49,5 @@ struct InitialView: View {
 }
 
 #Preview {
-    InitialView()
+    InitialView(router: Router())
 }

@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MainView: View {
+    let router: Router
+    
     var body: some View {
         ZStack {
             Image("GimPopSori_Background")
@@ -20,11 +22,17 @@ struct MainView: View {
                 .edgesIgnoringSafeArea(.all)
             
             HStack {
-                Button(action: {}, label: {
+                Button(action: {
+                    router.push(.make)
+                }, label: {
                     ZStack {
-                        Image("Button")
-                            .resizable()
-                            .scaledToFill()
+                        RoundedRectangle(cornerRadius: 100)
+                            .fill(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 100.0)
+                                    .stroke(Color.black, lineWidth: 10)
+                            )
+                            
                         Text("Go To Kitchen")
                             .foregroundStyle(Color.black)
                             .font(.cursive(.bold, size: 90))
@@ -32,25 +40,34 @@ struct MainView: View {
                     }
                 })
                 .padding(.leading, 100)
-                .padding(.vertical, 500)
-                Button(action: {}, label: {
+                .padding(.vertical, 300)
+                .padding(.trailing, 25)
+                
+                Button(action: {
+                    router.push(.description)
+                }, label: {
                     ZStack {
-                        Image("Button")
-                            .resizable()
-                            .scaledToFill()
-                        Text("Gimbap List")
+                        RoundedRectangle(cornerRadius: 100)
+                            .fill(Color.white)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 100.0)
+                                    .stroke(Color.black, lineWidth: 10)
+                            )
+                            
+                        Text("Gimpop List")
                             .foregroundStyle(Color.black)
                             .font(.cursive(.bold, size: 90))
                             .padding(.top, 30)
                     }
                 })
                 .padding(.trailing, 100)
-                .padding(.vertical, 500)
+                .padding(.vertical, 300)
+                .padding(.leading, 25)
             }
         }
     }
 }
 
 #Preview {
-    MainView()
+    MainView(router: Router())
 }
