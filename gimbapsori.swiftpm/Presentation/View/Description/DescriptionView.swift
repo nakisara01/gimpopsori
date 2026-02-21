@@ -18,6 +18,7 @@ struct DescriptionView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
             
+            Color.white.opacity(0.6)
                 .ignoresSafeArea()
             
             VStack(spacing: 32) {

@@ -6,40 +6,15 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
-
-struct IngredientPlacement: Identifiable, Hashable {
-    let id: UUID = .init()
-    let ingredient: Ingredient
-}
-
-private enum DragPayload {
-    case palette(String)
-    case placement(UUID)
-    
-    init?(rawValue: String) {
-        let components = rawValue.split(separator: ":", maxSplits: 1).map(String.init)
-        guard components.count == 2 else { return nil }
-        switch components[0] {
-        case "palette":
-            self = .palette(components[1])
-        case "placement":
-            guard let uuid = UUID(uuidString: components[1]) else { return nil }
-            self = .placement(uuid)
-        default:
-            return nil
-        }
-    }
-}
 
 struct MakeView: View {
-    @State private var gimbapLayers: [IngredientPlacement] = []
-    @State private var selectedIngredient: Ingredient?
+    @StateObject private var viewModel: MakeViewModel
     @State private var boardIsTargeted: Bool = false
     @State private var trashIsTargeted: Bool = false
     
-    private let palette: [Ingredient] = Ingredient.palette
-    private let dropType = UTType.plainText
+    init(viewModel: MakeViewModel = MakeViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         ZStack {
@@ -92,7 +67,7 @@ struct MakeView: View {
             
             ScrollView {
                 VStack(spacing: 18) {
-                    ForEach(palette) { ingredient in
+                    ForEach(viewModel.palette) { ingredient in
                         paletteCard(for: ingredient)
                     }
                 }
@@ -136,10 +111,10 @@ struct MakeView: View {
         )
         .cornerRadius(20)
         .onTapGesture {
-            selectedIngredient = ingredient
+            viewModel.select(ingredient)
         }
         .onDrag {
-            NSItemProvider(object: dragIdentifier(for: ingredient))
+            NSItemProvider(object: viewModel.dragIdentifier(for: ingredient))
         }
     }
     
@@ -149,7 +124,7 @@ struct MakeView: View {
                 Text("김밥 베이스")
                     .font(.cursive(.bold, size: 44))
                 Spacer()
-                Text("총 \(gimbapLayers.count) 레이어")
+                Text("총 \(viewModel.gimbapLayers.count) 레이어")
                     .font(.cursive(.medium, size: 24))
                     .foregroundColor(.black.opacity(0.6))
             }
@@ -164,14 +139,14 @@ struct MakeView: View {
                     .padding(24)
                 
                 VStack(spacing: 12) {
-                    if gimbapLayers.isEmpty {
+                    if viewModel.gimbapLayers.isEmpty {
                         Text("재료를 드래그해 나만의 소리를 쌓아보세요")
                             .font(.cursive(.medium, size: 30))
                             .foregroundColor(.black.opacity(0.5))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 60)
                     } else {
-                        ForEach(gimbapLayers) { placement in
+                        ForEach(viewModel.gimbapLayers) { placement in
                             layerView(for: placement)
                         }
                     }
@@ -181,8 +156,8 @@ struct MakeView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 540)
-            .onDrop(of: [dropType.identifier], isTargeted: $boardIsTargeted) { providers in
-                handleDrop(providers, destination: .board)
+            .onDrop(of: [viewModel.dropType], isTargeted: $boardIsTargeted) { providers in
+                viewModel.handleDrop(providers, destination: .board)
             }
         }
         .padding(28)
@@ -218,13 +193,13 @@ struct MakeView: View {
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 32)
-                .stroke(Color.white.opacity(0.4), lineWidth: selectedIngredient?.id == placement.ingredient.id ? 4 : 1)
+                .stroke(Color.white.opacity(0.4), lineWidth: viewModel.selectedIngredient?.id == placement.ingredient.id ? 4 : 1)
         )
         .onTapGesture {
-            selectedIngredient = placement.ingredient
+            viewModel.select(placement.ingredient)
         }
         .onDrag {
-            NSItemProvider(object: dragIdentifier(for: placement))
+            NSItemProvider(object: viewModel.dragIdentifier(for: placement))
         }
     }
     
@@ -233,7 +208,7 @@ struct MakeView: View {
             Text("사운드 노트")
                 .font(.cursive(.bold, size: 36))
             
-            if let selected = selectedIngredient {
+            if let selected = viewModel.selectedIngredient {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("\(selected.name) = \(selected.instrument)")
                         .font(.cursive(.bold, size: 30))
@@ -274,61 +249,9 @@ struct MakeView: View {
         .frame(maxWidth: .infinity)
         .background(trashIsTargeted ? Color.red.opacity(0.2) : Color.black.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .onDrop(of: [dropType.identifier], isTargeted: $trashIsTargeted) { providers in
-            handleDrop(providers, destination: .trash)
+        .onDrop(of: [viewModel.dropType], isTargeted: $trashIsTargeted) { providers in
+            viewModel.handleDrop(providers, destination: .trash)
         }
-    }
-
-    private enum DropDestination {
-        case board
-        case trash
-    }
-    
-    private func handleDrop(_ providers: [NSItemProvider], destination: DropDestination) -> Bool {
-        guard let provider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(dropType.identifier) }) else {
-            return false
-        }
-        provider.loadObject(ofClass: NSString.self) { string, _ in
-            guard let rawString = string as? String as String?, let payload = DragPayload(rawValue: rawString) else { return }
-            DispatchQueue.main.async {
-                switch (destination, payload) {
-                case (.board, .palette(let ingredientId)):
-                    appendIngredient(with: ingredientId)
-                case (.trash, .placement(let id)):
-                    removePlacement(with: id)
-                default:
-                    break
-                }
-            }
-        }
-        return true
-    }
-    
-    private func appendIngredient(with id: String) {
-        guard let ingredient = palette.first(where: { $0.id == id }) else { return }
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
-            let placement = IngredientPlacement(ingredient: ingredient)
-            gimbapLayers.append(placement)
-            selectedIngredient = ingredient
-        }
-    }
-    
-    private func removePlacement(with id: UUID) {
-        guard let index = gimbapLayers.firstIndex(where: { $0.id == id }) else { return }
-        withAnimation(.easeInOut(duration: 0.25)) {
-            gimbapLayers.remove(at: index)
-            if let selected = selectedIngredient, !gimbapLayers.contains(where: { $0.ingredient.id == selected.id }) {
-                selectedIngredient = gimbapLayers.last?.ingredient
-            }
-        }
-    }
-    
-    private func dragIdentifier(for ingredient: Ingredient) -> NSString {
-        NSString(string: "palette:\(ingredient.id)")
-    }
-    
-    private func dragIdentifier(for placement: IngredientPlacement) -> NSString {
-        NSString(string: "placement:\(placement.id.uuidString)")
     }
 }
 
