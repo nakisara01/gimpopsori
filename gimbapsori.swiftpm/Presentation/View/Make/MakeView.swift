@@ -12,6 +12,17 @@ struct MakeView: View {
     @State private var boardIsTargeted: Bool = false
     @State private var trashIsTargeted: Bool = false
     
+    private var rolledGimbapBinding: Binding<CompletedGimbap?> {
+        Binding(
+            get: { viewModel.rolledGimbap },
+            set: { newValue in
+                if newValue == nil {
+                    viewModel.resetRolledGimbap()
+                }
+            }
+        )
+    }
+    
     init(viewModel: MakeViewModel = MakeViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
@@ -30,7 +41,7 @@ struct MakeView: View {
             VStack(spacing: 32) {
                 header
                 
-                HStack(spacing: 32) {
+                HStack(alignment: .top, spacing: 32) {
                     paletteView
                     gimbapBoard
                     inspector
@@ -41,30 +52,35 @@ struct MakeView: View {
             .padding(.horizontal, 72)
             .padding(.vertical, 40)
         }
+        .fullScreenCover(item: rolledGimbapBinding) { gimbap in
+            GimbapDetailView(
+                gimbap: gimbap,
+                onClose: viewModel.resetRolledGimbap,
+                onNameChange: viewModel.updateRolledGimbapName
+            )
+        }
     }
     
     private var header: some View {
         VStack(spacing: 12) {
-            Text("나만의 국악 김밥")
+            Text("Build Your Own Gugak Gimbap")
                 .font(.cursive(.bold, size: 70))
                 .foregroundColor(.black)
             
-            Text("김과 밥 위에 원하는 재료를 올려 우리 악기의 소리를 얹어 보세요.")
+            Text("Layer ingredients on rice and let traditional instruments sing.")
                 .font(.cursive(.medium, size: 32))
                 .foregroundColor(.black.opacity(0.7))
         }
+        .frame(maxWidth: .infinity)
     }
     
     private var paletteView: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("재료")
+            Text("Ingredients")
                 .font(.cursive(.bold, size: 40))
-                .foregroundColor(.black)
-                
-            Text("끌어다가 김밥 위에 올려보세요.")
+            Text("Drag items onto the board.")
                 .font(.cursive(.medium, size: 26))
                 .foregroundColor(.black.opacity(0.6))
-            
             ScrollView {
                 VStack(spacing: 18) {
                     ForEach(viewModel.palette) { ingredient in
@@ -84,7 +100,8 @@ struct MakeView: View {
     }
     
     private func paletteCard(for ingredient: Ingredient) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        let isUsed = viewModel.hasUsed(ingredient)
+        return VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(ingredient.icon)
                     .font(.system(size: 40))
@@ -110,21 +127,33 @@ struct MakeView: View {
                 .stroke(ingredient.color, lineWidth: 2)
         )
         .cornerRadius(20)
+        .opacity(isUsed ? 0.45 : 1)
+        .overlay {
+            if isUsed {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.7))
+                    .overlay(
+                        Text("Used")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.black.opacity(0.65))
+                    )
+            }
+        }
         .onTapGesture {
             viewModel.select(ingredient)
         }
-        .onDrag {
-            NSItemProvider(object: viewModel.dragIdentifier(for: ingredient))
+        .conditionalDrag(isEnabled: !isUsed) {
+            viewModel.dragIdentifier(for: ingredient)
         }
     }
     
     private var gimbapBoard: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .lastTextBaseline) {
-                Text("김밥 베이스")
+                Text("Gimbap Board")
                     .font(.cursive(.bold, size: 44))
                 Spacer()
-                Text("총 \(viewModel.gimbapLayers.count) 레이어")
+                Text("Total \(viewModel.gimbapLayers.count) layers")
                     .font(.cursive(.medium, size: 24))
                     .foregroundColor(.black.opacity(0.6))
             }
@@ -133,14 +162,12 @@ struct MakeView: View {
                 RoundedRectangle(cornerRadius: 100)
                     .fill(Color(hex: "050505"))
                     .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 20)
-                
                 RoundedRectangle(cornerRadius: 80)
                     .fill(Color(hex: "F8F5EB"))
                     .padding(24)
-                
                 VStack(spacing: 12) {
                     if viewModel.gimbapLayers.isEmpty {
-                        Text("재료를 드래그해 나만의 소리를 쌓아보세요")
+                        Text("Drag ingredients to build your own soundscape")
                             .font(.cursive(.medium, size: 30))
                             .foregroundColor(.black.opacity(0.5))
                             .multilineTextAlignment(.center)
@@ -153,12 +180,29 @@ struct MakeView: View {
                     Spacer()
                 }
                 .padding(40)
+                
+                if viewModel.isRolling {
+                    Color.black.opacity(0.45)
+                        .overlay(
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                    .tint(.white)
+                                Text("Rolling your gimbap...")
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 80, style: .continuous))
+                        .padding(28)
+                }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 540)
             .onDrop(of: [viewModel.dropType], isTargeted: $boardIsTargeted) { providers in
                 viewModel.handleDrop(providers, destination: .board)
             }
+            
+            rollButton
         }
         .padding(28)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 48, style: .continuous))
@@ -166,17 +210,18 @@ struct MakeView: View {
             RoundedRectangle(cornerRadius: 48)
                 .stroke(boardIsTargeted ? Color.black : Color.black.opacity(0.15), lineWidth: 2)
         )
+        .frame(maxWidth: .infinity)
     }
     
     private func layerView(for placement: IngredientPlacement) -> some View {
-        HStack {
+        HStack(spacing: 12) {
             Text(placement.ingredient.icon)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: -2) {
                 Text(placement.ingredient.name)
                     .font(.cursive(.bold, size: 26))
                 Text(placement.ingredient.instrument)
-                    .font(.cursive(.medium, size: 20))
-                    .opacity(0.8)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.black.opacity(0.8))
             }
             Spacer()
         }
@@ -198,16 +243,15 @@ struct MakeView: View {
         .onTapGesture {
             viewModel.select(placement.ingredient)
         }
-        .onDrag {
-            NSItemProvider(object: viewModel.dragIdentifier(for: placement))
+        .conditionalDrag(isEnabled: true) {
+            viewModel.dragIdentifier(for: placement)
         }
     }
     
     private var inspector: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("사운드 노트")
+            Text("Sound Notes")
                 .font(.cursive(.bold, size: 36))
-            
             if let selected = viewModel.selectedIngredient {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("\(selected.name) = \(selected.instrument)")
@@ -215,14 +259,13 @@ struct MakeView: View {
                     Text(selected.description)
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.black.opacity(0.75))
-                    
-                    Text("드래그해서 다른 자리에 복사하거나 아래로 끌어버리면 삭제돼요.")
+                    Text("Each instrument can be used once. Drag layers to the trash to delete them.")
                         .font(.system(size: 15))
                         .foregroundColor(.black.opacity(0.5))
                         .padding(.top, 8)
                 }
             } else {
-                Text("레이어를 눌러 어떤 악기가 연주되는지 확인해요.")
+                Text("Tap a layer to learn which instrument is playing.")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.black.opacity(0.65))
             }
@@ -241,7 +284,7 @@ struct MakeView: View {
         HStack(spacing: 12) {
             Image(systemName: "trash")
                 .font(.system(size: 26, weight: .semibold))
-            Text("여기로 끌어놓으면 레이어가 삭제돼요")
+            Text("Drop layers here to delete them")
                 .font(.cursive(.medium, size: 26))
         }
         .padding(.horizontal, 28)
@@ -252,6 +295,56 @@ struct MakeView: View {
         .onDrop(of: [viewModel.dropType], isTargeted: $trashIsTargeted) { providers in
             viewModel.handleDrop(providers, destination: .trash)
         }
+    }
+    
+    private var rollButton: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: viewModel.rollGimbap) {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                        .font(.system(size: 28, weight: .medium))
+                    Text(viewModel.canRoll ? "Roll the Gimbap" : "Add unique ingredients to roll")
+                        .font(.cursive(.bold, size: 28))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(colors: [Color(hex: "050505"), Color(hex: "292929")], startPoint: .leading, endPoint: .trailing)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+            }
+            .disabled(!viewModel.canRoll)
+            .opacity(viewModel.canRoll ? 1 : 0.5)
+            
+            Text("Each ingredient can be used once. Rolling saves your creation.")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.black.opacity(0.6))
+        }
+        }
+    }
+
+private struct ConditionalDragModifier: ViewModifier {
+    let isEnabled: Bool
+    let provider: () -> NSString
+    
+    func body(content: Content) -> some View {
+        if isEnabled {
+            if #available(iOS 16.0, *) {
+                content.draggable(provider() as String)
+            } else {
+                content.onDrag { NSItemProvider(object: provider()) }
+            }
+        } else {
+            content
+        }
+    }
+}
+
+private extension View {
+    func conditionalDrag(isEnabled: Bool, provider: @escaping () -> NSString) -> some View {
+        modifier(ConditionalDragModifier(isEnabled: isEnabled, provider: provider))
     }
 }
 
