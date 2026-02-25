@@ -148,7 +148,7 @@ struct MakeView: View {
     }
     
     private var gimbapBoard: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .lastTextBaseline) {
                 Text("Gimbap Board")
                     .font(.cursive(.bold, size: 44))
@@ -159,30 +159,24 @@ struct MakeView: View {
             }
             
             ZStack {
-                RoundedRectangle(cornerRadius: 100)
-                    .fill(Color(hex: "050505"))
-                    .shadow(color: .black.opacity(0.2), radius: 15, x: 0, y: 20)
-                RoundedRectangle(cornerRadius: 80)
-                    .fill(Color(hex: "F8F5EB"))
-                    .padding(24)
-                VStack(spacing: 12) {
-                    if viewModel.gimbapLayers.isEmpty {
-                        Text("Drag ingredients to build your own soundscape")
-                            .font(.cursive(.medium, size: 30))
-                            .foregroundColor(.black.opacity(0.5))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 60)
-                    } else {
-                        ForEach(viewModel.gimbapLayers) { placement in
-                            layerView(for: placement)
-                        }
-                    }
-                    Spacer()
+                Image("GimBapBase")
+                    .resizable()
+                    .scaledToFit()
+                    .padding(.horizontal, 40)
+                    .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 20)
+                
+                if viewModel.gimbapLayers.isEmpty {
+                    Text("Drag ingredients to build your own soundscape")
+                        .font(.cursive(.medium, size: 30))
+                        .foregroundColor(.black.opacity(0.5))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 80)
+                } else {
+                    ingredientOverlay
                 }
-                .padding(40)
                 
                 if viewModel.isRolling {
-                    Color.black.opacity(0.45)
+                    Color.black.opacity(0.4)
                         .overlay(
                             VStack(spacing: 12) {
                                 ProgressView()
@@ -192,12 +186,12 @@ struct MakeView: View {
                                     .foregroundColor(.white)
                             }
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 80, style: .continuous))
-                        .padding(28)
+                        .clipShape(RoundedRectangle(cornerRadius: 60, style: .continuous))
+                        .padding(.horizontal, 36)
                 }
             }
+            .frame(height: 420)
             .frame(maxWidth: .infinity)
-            .frame(height: 540)
             .onDrop(of: [viewModel.dropType], isTargeted: $boardIsTargeted) { providers in
                 viewModel.handleDrop(providers, destination: .board)
             }
@@ -211,6 +205,35 @@ struct MakeView: View {
                 .stroke(boardIsTargeted ? Color.black : Color.black.opacity(0.15), lineWidth: 2)
         )
         .frame(maxWidth: .infinity)
+    }
+    
+    private var ingredientOverlay: some View {
+        VStack(spacing: -28) {
+            ForEach(viewModel.gimbapLayers) { placement in
+                interactiveLayer(for: placement)
+            }
+        }
+        .padding(.horizontal, 70)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .animation(.easeInOut(duration: 0.35), value: viewModel.gimbapLayers.count)
+    }
+    
+    private func interactiveLayer(for placement: IngredientPlacement) -> some View {
+        Group {
+            if let asset = placement.ingredient.imageAssetName {
+                Image(asset)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                layerView(for: placement)
+            }
+        }
+        .onTapGesture {
+            viewModel.select(placement.ingredient)
+        }
+        .conditionalDrag(isEnabled: true) {
+            viewModel.dragIdentifier(for: placement)
+        }
     }
     
     private func layerView(for placement: IngredientPlacement) -> some View {

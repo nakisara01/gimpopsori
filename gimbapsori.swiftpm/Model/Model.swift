@@ -18,6 +18,19 @@ struct Ingredient: Identifiable, Hashable, Codable {
     
     var color: Color { Color(hex: colorHex) }
     var accentColor: Color { Color(hex: accentHex) }
+    
+    var imageAssetName: String? {
+        switch id {
+        case "danmuji": return "Danmuji"
+        case "sigeumchi": return "Spanich"
+        case "matsal": return "Matsal"
+        case "ham": return "Ham"
+        case "ueong": return "WooEong"
+        case "danggeun": return "Carrot"
+        case "gyeran": return "EggJidan"
+        default: return nil
+        }
+    }
 }
 
 extension Ingredient {
