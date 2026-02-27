@@ -70,10 +70,8 @@ struct GimbapDetailView: View {
     private var heroCard: some View {
         VStack(spacing: 24) {
             HStack(alignment: .center, spacing: 28) {
-                GimbapCrossSectionView(ingredients: gimbap.ingredients)
-                    .frame(width: 190, height: 190)
-                    .rotationEffect(.degrees(Double(rollProgress) * 6 - 3))
-                    .shadow(color: Color.black.opacity(0.18), radius: 18, x: 0, y: 12)
+                boardPreview
+                    .frame(width: 260, height: 220)
                 VStack(alignment: .leading, spacing: 18) {
                     TextField("Enter a memorable name", text: $gimbapName)
                         .padding(.horizontal, 18)
@@ -202,7 +200,7 @@ struct GimbapDetailView: View {
             .frame(height: 10)
         }
     }
-    
+
     private var primaryButton: some View {
         Button(action: onClose) {
             Text("Back to Making")
@@ -226,6 +224,73 @@ struct GimbapDetailView: View {
         rollProgress = 0
         withAnimation(.easeInOut(duration: 1.6)) {
             rollProgress = 1
+        }
+    }
+    
+    private var boardPreview: some View {
+        ZStack {
+            Image("GimBapBase")
+                .resizable()
+                .scaledToFit()
+                .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 16)
+            if gimbap.ingredients.isEmpty {
+                Text("No layers selected")
+                    .font(.cursive(.medium, size: 24))
+                    .foregroundColor(.black.opacity(0.5))
+            } else {
+                GeometryReader { proxy in
+                    VStack(spacing: -90) {
+                        ForEach(gimbap.ingredients) { ingredient in
+                            boardLayer(for: ingredient)
+                        }
+                    }
+                .padding(.horizontal, 42)
+                .padding(.vertical, 28)
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
+                }
+                .allowsHitTesting(false)
+            }
+        }
+        .frame(width: 320, height: 260)
+        .clipped()
+    }
+    
+    private func boardLayer(for ingredient: Ingredient) -> some View {
+        Group {
+            if let asset = ingredient.imageAssetName {
+                Image(asset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 110)
+                    .frame(maxWidth: .infinity)
+            } else {
+                HStack(spacing: 12) {
+                    Text(ingredient.icon)
+                    VStack(alignment: .leading, spacing: -2) {
+                        Text(ingredient.name)
+                            .font(.cursive(.bold, size: 24))
+                        Text(ingredient.instrument)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.black.opacity(0.8))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 26)
+                .frame(height: 68)
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [ingredient.color.opacity(0.95), ingredient.accentColor.opacity(0.85)]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28)
+                        .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                )
+            }
         }
     }
     

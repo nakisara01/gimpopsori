@@ -19,9 +19,11 @@ final class MakeViewModel: ObservableObject {
     @Published private(set) var model: MakeModel
     @Published private(set) var isRolling: Bool = false
     @Published private(set) var rolledGimbap: CompletedGimbap?
+    @Published private(set) var unlockProgress: IngredientUnlockProgress
     let palette: [Ingredient]
     let dropType: UTType = .plainText
     private let storage: GimbapStorage
+    private let unlockStorage: IngredientUnlockStorage
     private static let nameFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, HH:mm"
@@ -47,10 +49,15 @@ final class MakeViewModel: ObservableObject {
         }
     }
     
-    init(model: MakeModel = MakeModel(), palette: [Ingredient] = Ingredient.palette, storage: GimbapStorage = .shared) {
+    init(model: MakeModel = MakeModel(),
+         palette: [Ingredient] = Ingredient.palette,
+         storage: GimbapStorage = .shared,
+         unlockStorage: IngredientUnlockStorage = .shared) {
         self.model = model
         self.palette = palette
         self.storage = storage
+        self.unlockStorage = unlockStorage
+        self.unlockProgress = unlockStorage.load()
     }
     
     var gimbapLayers: [IngredientPlacement] {
@@ -75,6 +82,26 @@ final class MakeViewModel: ObservableObject {
     
     func hasUsed(_ ingredient: Ingredient) -> Bool {
         usedIngredientIDs.contains(ingredient.id)
+    }
+    
+    func isIngredientUnlocked(_ ingredient: Ingredient) -> Bool {
+        guard let index = palette.firstIndex(where: { $0.id == ingredient.id }) else { return false }
+        return index < unlockProgress.unlockedCount
+    }
+    
+    func isNextToUnlock(_ ingredient: Ingredient) -> Bool {
+        nextIngredientToUnlock?.id == ingredient.id
+    }
+    
+    var nextIngredientToUnlock: Ingredient? {
+        guard unlockProgress.unlockedCount < palette.count else { return nil }
+        return palette[unlockProgress.unlockedCount]
+    }
+    
+    func unlock(_ ingredient: Ingredient) {
+        guard isNextToUnlock(ingredient) else { return }
+        unlockProgress.unlockedCount = min(unlockProgress.unlockedCount + 1, palette.count)
+        unlockStorage.save(unlockProgress)
     }
     
     func handleDrop(_ providers: [NSItemProvider], destination: MakeDropDestination) -> Bool {
@@ -106,7 +133,7 @@ final class MakeViewModel: ObservableObject {
     }
     
     private func appendIngredient(with id: String) {
-        guard let ingredient = palette.first(where: { $0.id == id }), !usedIngredientIDs.contains(id) else { return }
+        guard let ingredient = palette.first(where: { $0.id == id }), !usedIngredientIDs.contains(id), isIngredientUnlocked(ingredient) else { return }
         rolledGimbap = nil
         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
             let placement = IngredientPlacement(ingredient: ingredient)

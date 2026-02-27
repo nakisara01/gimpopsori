@@ -8,20 +8,20 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "gimbapsori",
+    name: "Gimpopsori",
     platforms: [
         .iOS("16.0")
     ],
     products: [
         .iOSApplication(
-            name: "gimbapsori",
+            name: "Gimpopsori",
             targets: ["AppModule"],
             bundleIdentifier: "com.heum.gimbapsori",
             teamIdentifier: "8ZUB5C2R66",
             displayVersion: "1.0",
             bundleVersion: "1",
             appIcon: .asset("AppIcon"),
-            accentColor: .presetColor(.red),
+            accentColor: .presetColor(.orange),
             supportedDeviceFamilies: [
                 .pad,
                 .phone

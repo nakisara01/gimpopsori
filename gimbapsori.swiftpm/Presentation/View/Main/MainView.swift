@@ -21,50 +21,40 @@ struct MainView: View {
             Color.white.opacity(0.6)
                 .edgesIgnoringSafeArea(.all)
             
-            HStack {
-                Button(action: {
-                    router.push(.make)
-                }, label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 100)
-                            .fill(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 100.0)
-                                    .stroke(Color.black, lineWidth: 10)
-                            )
-                            
-                        Text("Go To Kitchen")
-                            .foregroundStyle(Color.black)
-                            .font(.cursive(.bold, size: 90))
-                            .padding(.top, 30)
+            VStack(spacing: 60) {
+                HStack(spacing: 60) {
+                    mainButton(title: "Go To Kitchen") {
+                        router.push(.make)
                     }
-                })
-                .padding(.leading, 100)
-                .padding(.vertical, 300)
-                .padding(.trailing, 25)
-                
-                Button(action: {
-                    router.push(.description)
-                }, label: {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 100)
-                            .fill(Color.white)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 100.0)
-                                    .stroke(Color.black, lineWidth: 10)
-                            )
-                            
-                        Text("Gimpop List")
-                            .foregroundStyle(Color.black)
-                            .font(.cursive(.bold, size: 90))
-                            .padding(.top, 30)
+                    mainButton(title: "Ingredient Intro") {
+                        router.push(.ingredientIntroduce)
                     }
-                })
-                .padding(.trailing, 100)
-                .padding(.vertical, 300)
-                .padding(.leading, 25)
+                    mainButton(title: "Gimbap List") {
+                        router.push(.description)
+                    }
+                }
+            }
+            .padding(.horizontal, 80)
+            .padding(.vertical, 160)
+        }
+    }
+    
+    private func mainButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 80)
+                    .fill(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 80)
+                            .stroke(Color.black, lineWidth: 8)
+                    )
+                Text(title)
+                    .foregroundStyle(Color.black)
+                    .font(.cursive(.bold, size: 70))
+                    .padding(.top, 20)
             }
         }
+        .frame(width: 260, height: 320)
     }
 }
 

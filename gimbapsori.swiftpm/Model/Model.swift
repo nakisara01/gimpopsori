@@ -31,6 +31,19 @@ struct Ingredient: Identifiable, Hashable, Codable {
         default: return nil
         }
     }
+    
+    var instrumentImageAssetName: String? {
+        switch instrument {
+        case "Taepyeongso": return "Taepyeongso"
+        case "Daegeum": return "Daegeum"
+        case "Haegeum": return "Haegeum"
+        case "Piri": return "Piri"
+        case "Ajaeng": return "Ajaeng"
+        case "Gayageum": return "Gayageum"
+        case "Pyeonjong": return "Pyeonjong"
+        default: return "InstrumentPlaceholder"
+        }
+    }
 }
 
 extension Ingredient {
@@ -47,7 +60,7 @@ extension Ingredient {
             ),
             Ingredient(
                 id: "sigeumchi",
-                name: "Sigeumchi",
+                name: "Spanich",
                 instrument: "Daegeum",
                 description: "Lush Daegeum phrases breathe verdant freshness across the roll.",
                 colorHex: "5BB97F",
@@ -56,7 +69,7 @@ extension Ingredient {
             ),
             Ingredient(
                 id: "matsal",
-                name: "Matsal",
+                name: "Crab Stick",
                 instrument: "Haegeum",
                 description: "Clear Haegeum strings glide by with a silky, delicate texture.",
                 colorHex: "FFA18F",
@@ -70,11 +83,11 @@ extension Ingredient {
                 description: "Bold Piri melodies hold everything together like hearty ham.",
                 colorHex: "F57E71",
                 accentHex: "B04134",
-                icon: "🥓"
+                icon: "🥩"
             ),
             Ingredient(
                 id: "ueong",
-                name: "Ueong",
+                name: "Burdock",
                 instrument: "Ajaeng",
                 description: "Deep, rustic Ajaeng resonance mirrors the sweet burdock roots.",
                 colorHex: "8F633C",
@@ -83,7 +96,7 @@ extension Ingredient {
             ),
             Ingredient(
                 id: "danggeun",
-                name: "Danggeun",
+                name: "Carrot",
                 instrument: "Gayageum",
                 description: "Crisp Gayageum plucks cut bright lines like vivid carrots.",
                 colorHex: "FF9045",
@@ -92,8 +105,8 @@ extension Ingredient {
             ),
             Ingredient(
                 id: "gyeran",
-                name: "Gyeran Jidan",
-                instrument: "Pyeonjong",
+                name: "Egg Ganish",
+                instrument: "Geomungo",
                 description: "Graceful Pyeonjong chimes finish the roll with a soft shimmer.",
                 colorHex: "FFE27A",
                 accentHex: "FFC241",

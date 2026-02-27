@@ -11,6 +11,7 @@ struct MakeView: View {
     @StateObject private var viewModel: MakeViewModel
     @State private var boardIsTargeted: Bool = false
     @State private var trashIsTargeted: Bool = false
+    @State private var presentedIngredientForUnlock: Ingredient?
     
     private var rolledGimbapBinding: Binding<CompletedGimbap?> {
         Binding(
@@ -41,10 +42,9 @@ struct MakeView: View {
             VStack(spacing: 32) {
                 header
                 
-                HStack(alignment: .top, spacing: 32) {
+                HStack(alignment: .top, spacing: 36) {
                     paletteView
                     gimbapBoard
-                    inspector
                 }
                 
                 trashDropArea
@@ -57,6 +57,19 @@ struct MakeView: View {
                 gimbap: gimbap,
                 onClose: viewModel.resetRolledGimbap,
                 onNameChange: viewModel.updateRolledGimbapName
+            )
+        }
+        .fullScreenCover(item: $presentedIngredientForUnlock) { ingredient in
+            IngredientUnlockView(
+                ingredient: ingredient,
+                isNext: viewModel.isNextToUnlock(ingredient),
+                onUnlock: {
+                    viewModel.unlock(ingredient)
+                    presentedIngredientForUnlock = nil
+                },
+                onClose: {
+                    presentedIngredientForUnlock = nil
+                }
             )
         }
     }
@@ -79,7 +92,7 @@ struct MakeView: View {
             Text("Ingredients")
                 .font(.cursive(.bold, size: 40))
             Text("Drag items onto the board.")
-                .font(.cursive(.medium, size: 26))
+                .font(.system(size: 16))
                 .foregroundColor(.black.opacity(0.6))
             ScrollView {
                 VStack(spacing: 18) {
@@ -101,15 +114,16 @@ struct MakeView: View {
     
     private func paletteCard(for ingredient: Ingredient) -> some View {
         let isUsed = viewModel.hasUsed(ingredient)
+        let isUnlocked = viewModel.isIngredientUnlocked(ingredient)
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(ingredient.icon)
                     .font(.system(size: 40))
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: -8) {
                     Text(ingredient.name)
                         .font(.cursive(.bold, size: 28))
                     Text(ingredient.instrument)
-                        .font(.cursive(.medium, size: 22))
+                        .font(.system(size: 15))
                         .foregroundColor(.black.opacity(0.7))
                 }
                 Spacer()
@@ -127,7 +141,7 @@ struct MakeView: View {
                 .stroke(ingredient.color, lineWidth: 2)
         )
         .cornerRadius(20)
-        .opacity(isUsed ? 0.45 : 1)
+        .opacity(isUnlocked ? 1 : 0.35)
         .overlay {
             if isUsed {
                 RoundedRectangle(cornerRadius: 20)
@@ -137,12 +151,36 @@ struct MakeView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.black.opacity(0.65))
                     )
+                    .allowsHitTesting(false)
+            } else if !isUnlocked {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.05))
+                    .overlay(
+                        Text("Locked")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.black.opacity(0.6))
+                    )
+                    .allowsHitTesting(false)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            Button {
+                presentedIngredientForUnlock = ingredient
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.black.opacity(0.7))
+                    .padding(10)
             }
         }
         .onTapGesture {
-            viewModel.select(ingredient)
+            if isUnlocked {
+                viewModel.select(ingredient)
+            } else {
+                presentedIngredientForUnlock = ingredient
+            }
         }
-        .conditionalDrag(isEnabled: !isUsed) {
+        .conditionalDrag(isEnabled: !isUsed && isUnlocked) {
             viewModel.dragIdentifier(for: ingredient)
         }
     }
@@ -271,38 +309,6 @@ struct MakeView: View {
         }
     }
     
-    private var inspector: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Sound Notes")
-                .font(.cursive(.bold, size: 36))
-            if let selected = viewModel.selectedIngredient {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("\(selected.name) = \(selected.instrument)")
-                        .font(.cursive(.bold, size: 30))
-                    Text(selected.description)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.black.opacity(0.75))
-                    Text("Each instrument can be used once. Drag layers to the trash to delete them.")
-                        .font(.system(size: 15))
-                        .foregroundColor(.black.opacity(0.5))
-                        .padding(.top, 8)
-                }
-            } else {
-                Text("Tap a layer to learn which instrument is playing.")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.black.opacity(0.65))
-            }
-            Spacer()
-        }
-        .padding(24)
-        .frame(width: 320, alignment: .topLeading)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 32)
-                .stroke(Color.black.opacity(0.1), lineWidth: 1)
-        )
-    }
-    
     private var trashDropArea: some View {
         HStack(spacing: 12) {
             Image(systemName: "trash")
@@ -345,8 +351,8 @@ struct MakeView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.black.opacity(0.6))
         }
-        }
     }
+}
 
 private struct ConditionalDragModifier: ViewModifier {
     let isEnabled: Bool
