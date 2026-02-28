@@ -46,19 +46,19 @@ struct IngredientStoryScene: Identifiable, Hashable {
     private static func instrumentFlavor(for instrument: String) -> String {
         switch instrument {
         case "Taepyeongso":
-            return "The Taepyeongso's piercing reed announces celebrations, so expect bright calls answered by the backing layers."
+            return "The taepyeongso is a traditional Korean double-reed wind instrument, similar to a powerful oboe, known for its bright, sharp, and penetrating tone. Historically used in outdoor performances and ceremonies, it projects strongly enough to rise above drums and large crowds. In an ensemble, it often leads or highlights important musical moments, acting as a bold voice that immediately captures attention and adds dramatic color to the music."
         case "Daegeum":
-            return "The Daegeum breathes long bamboo phrases, weaving air between beats and keeping the roll open."
+            return "The daegeum is a traditional Korean bamboo flute known for its warm, airy sound and subtle buzzing texture created by a special membrane. Its tone can feel both gentle and expansive, like wind moving through open space. In an ensemble, the daegeum often carries long melodic lines or expressive phrases, adding emotional depth and a sense of breathing space within the music."
         case "Haegeum":
-            return "The Haegeum's bowed strings slide between notes, bending pitch like a spoon through rice."
+            return "The haegeum is a traditional Korean two-string bowed instrument played upright. Its sound is clear, slightly nasal, and highly expressive, capable of sliding smoothly between notes. In an ensemble, the haegeum often carries emotional melodies or expressive lines, adding human-like nuance and dramatic color to the music."
         case "Piri":
-            return "Piri tones are woody and focused; they anchor the middle register so other voices can sit atop them."
+            return "The piri is a traditional Korean wooden double-reed instrument with a warm yet penetrating tone. Its sound is fuller and rounder than that of the taepyeongso, making it well suited for melodic lines in the middle register. In an ensemble, the piri often acts as a core melodic voice, grounding and connecting different musical layers."
         case "Ajaeng":
-            return "Ajaeng scrapes produce gravelly resonance, giving the roll depth like toasted sesame."
+            return "The ajaeng is a traditional Korean bowed zither known for its deep and rough-textured tone. Played with a wooden bow, it produces a resonant and earthy sound that feels powerful and grounded. In ensemble music, the ajaeng supports the lower register, adding gravity and structural strength to the overall harmony."
         case "Gayageum":
-            return "Gayageum plucks sparkle quickly, filling gaps with crisp chatter between heavier hits."
-        case "Pyeonjong":
-            return "Pyeonjong bells shimmer after every strike, showering brightness across the ensemble."
+            return "The gayageum is a traditional Korean plucked zither with multiple strings stretched across a wooden body. Its tone is bright, clear, and capable of delicate ornamentation. In an ensemble, the gayageum adds rhythmic detail and melodic decoration, bringing lightness and agility to the music."
+        case "Geomungo":
+            return "The geomungo is a traditional Korean plucked zither with a deep and resonant tone. Played with a bamboo stick, it produces strong, rhythmic bass sounds that feel grounded and steady. In ensemble music, the geomungo often provides structural support, shaping the harmonic foundation and giving the music a sense of stability and depth."
         default:
             return "Let this instrument guide the emotion of the roll." 
         }

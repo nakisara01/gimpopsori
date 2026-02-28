@@ -8,13 +8,13 @@ import PackageDescription
 import AppleProductTypes
 
 let package = Package(
-    name: "Gimpopsori",
+    name: "GimPOPsori",
     platforms: [
         .iOS("16.0")
     ],
     products: [
         .iOSApplication(
-            name: "Gimpopsori",
+            name: "GimPOPsori",
             targets: ["AppModule"],
             bundleIdentifier: "com.heum.gimbapsori",
             teamIdentifier: "8ZUB5C2R66",

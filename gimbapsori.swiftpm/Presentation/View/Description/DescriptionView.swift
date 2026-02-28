@@ -24,7 +24,7 @@ struct DescriptionView: View {
             
             ScrollView {
                 VStack(spacing: 32) {
-                    Text("Gimbap Sori Menu")
+                    Text("Gimbap Sori Storage")
                         .font(.cursive(.bold, size: 72))
                         .foregroundColor(.black)
                         .padding(.top, 60)
@@ -84,7 +84,7 @@ struct DescriptionView: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
             } else {
                 ForEach(history) { gimbap in
-                    historyCard(for: gimbap)
+                    HistoryCardView(gimbap: gimbap)
                         .padding(.vertical, 4)
                 }
             }
@@ -98,8 +98,17 @@ struct DescriptionView: View {
         .padding(.horizontal, 80)
     }
     
-    private func historyCard(for gimbap: CompletedGimbap) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+}
+
+private struct HistoryCardView: View {
+    let gimbap: CompletedGimbap
+    @StateObject private var audioController = GimbapAudioController()
+    @State private var playbackProgress: Double = 0
+    @State private var isScrubbing: Bool = false
+    private let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
             Text(gimbap.name)
                 .font(.cursive(.bold, size: 30))
             HStack {
@@ -111,24 +120,14 @@ struct DescriptionView: View {
                     .foregroundColor(.black.opacity(0.6))
                 Spacer()
             }
-            HStack(alignment: .top, spacing: 24) {
-                GimbapCrossSectionView(ingredients: gimbap.ingredients)
-                    .frame(width: 140, height: 140)
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(gimbap.ingredients) { ingredient in
-                        HStack(spacing: 8) {
-                            Text(ingredient.icon)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(ingredient.name)
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text(ingredient.instrument)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.black.opacity(0.6))
-                            }
-                        }
-                    }
+            HStack(alignment: .center, spacing: 28) {
+                boardPreview
+                    .frame(width: 240, height: 200)
+                VStack(alignment: .leading, spacing: 16) {
+                    instrumentStrip
+                    playbackControls
                 }
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .padding(20)
@@ -137,6 +136,151 @@ struct DescriptionView: View {
             RoundedRectangle(cornerRadius: 32)
                 .stroke(Color.black.opacity(0.08), lineWidth: 1)
         )
+        .onReceive(timer) { _ in updateProgress() }
+    }
+
+    private var boardPreview: some View {
+        ZStack {
+            Image("GimBapBase")
+                .resizable()
+                .scaledToFit()
+                .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 10)
+            if gimbap.ingredients.isEmpty {
+                Text("No layers")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.black.opacity(0.5))
+            } else {
+                GeometryReader { proxy in
+                    VStack(spacing: -60) {
+                        ForEach(gimbap.ingredients) { ingredient in
+                            boardLayer(for: ingredient)
+                        }
+                    }
+                    .padding(.horizontal, 54)
+                    .padding(.vertical, 28)
+                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
+                }
+                .allowsHitTesting(false)
+            }
+        }
+        .clipped()
+    }
+
+    private func boardLayer(for ingredient: Ingredient) -> some View {
+        Group {
+            if let asset = ingredient.imageAssetName {
+                Image(asset)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 90 * ingredient.boardLayerScale)
+                    .frame(maxWidth: .infinity)
+            } else {
+                HStack(spacing: 10) {
+                    Text(ingredient.icon)
+                    VStack(alignment: .leading, spacing: -2) {
+                        Text(ingredient.name)
+                            .font(.system(size: 18, weight: .semibold))
+                        Text(ingredient.instrument)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.black.opacity(0.7))
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 18)
+                .frame(height: 56 * ingredient.boardLayerScale)
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(
+                        colors: [ingredient.color.opacity(0.9), ingredient.accentColor.opacity(0.85)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                )
+            }
+        }
+    }
+
+    private var instrumentStrip: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Instruments used")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.black.opacity(0.7))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(gimbap.ingredients) { ingredient in
+                        VStack(spacing: 6) {
+                            if let instrumentAsset = ingredient.instrumentImageAssetName {
+                                Image(instrumentAsset)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 72, height: 72)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    .shadow(color: Color.black.opacity(0.1), radius: 6, x: 0, y: 4)
+                            } else {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.black.opacity(0.05))
+                                    .frame(width: 72, height: 72)
+                            }
+                            Text(ingredient.instrument)
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .frame(width: 82)
+                    }
+                }
+            }
+        }
+    }
+
+    private var playbackControls: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Replay this roll")
+                .font(.system(size: 16, weight: .semibold))
+            HStack(spacing: 12) {
+                Button(action: togglePlayback) {
+                    Image(systemName: audioController.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.black)
+                }
+                Slider(
+                    value: Binding(
+                        get: { playbackProgress },
+                        set: { newValue in
+                            playbackProgress = newValue
+                            if isScrubbing {
+                                audioController.seek(to: newValue)
+                            }
+                        }
+                    ),
+                    in: 0...1,
+                    onEditingChanged: { editing in
+                        isScrubbing = editing
+                        if !editing {
+                            audioController.seek(to: playbackProgress)
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    private func togglePlayback() {
+        if audioController.isPlaying {
+            audioController.pause()
+        } else {
+            audioController.prepareTracks(for: gimbap.ingredients)
+            audioController.play()
+            playbackProgress = 0
+        }
+    }
+
+    private func updateProgress() {
+        guard audioController.isPlaying, !isScrubbing else { return }
+        playbackProgress = audioController.normalizedProgress
     }
 }
 

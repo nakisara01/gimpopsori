@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct MakeView: View {
+    let router: Router?
     @StateObject private var viewModel: MakeViewModel
+    private let boardLayerHeight: CGFloat = 78
+    private let boardLayerSpacing: CGFloat = -28
     @State private var boardIsTargeted: Bool = false
     @State private var trashIsTargeted: Bool = false
     @State private var presentedIngredientForUnlock: Ingredient?
@@ -24,7 +27,8 @@ struct MakeView: View {
         )
     }
     
-    init(viewModel: MakeViewModel = MakeViewModel()) {
+    init(router: Router? = nil, viewModel: MakeViewModel = MakeViewModel()) {
+        self.router = router
         _viewModel = StateObject(wrappedValue: viewModel)
     }
     
@@ -55,6 +59,7 @@ struct MakeView: View {
         .fullScreenCover(item: rolledGimbapBinding) { gimbap in
             GimbapDetailView(
                 gimbap: gimbap,
+                router: router,
                 onClose: viewModel.resetRolledGimbap,
                 onNameChange: viewModel.updateRolledGimbapName
             )
@@ -81,7 +86,7 @@ struct MakeView: View {
                 .foregroundColor(.black)
             
             Text("Layer ingredients on rice and let traditional instruments sing.")
-                .font(.cursive(.medium, size: 32))
+                .font(.system(size: 22))
                 .foregroundColor(.black.opacity(0.7))
         }
         .frame(maxWidth: .infinity)
@@ -116,9 +121,19 @@ struct MakeView: View {
         let isUsed = viewModel.hasUsed(ingredient)
         let isUnlocked = viewModel.isIngredientUnlocked(ingredient)
         return VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(ingredient.icon)
-                    .font(.system(size: 40))
+            HStack(spacing: 12) {
+                Group {
+                    if let asset = ingredient.imageAssetName {
+                        Image(asset)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 48, height: 48)
+                    } else {
+                        Text(ingredient.icon)
+                            .font(.system(size: 40))
+                    }
+                }
+                .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: -8) {
                     Text(ingredient.name)
                         .font(.cursive(.bold, size: 28))
@@ -171,6 +186,7 @@ struct MakeView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.black.opacity(0.7))
                     .padding(10)
+                    .accessibilityLabel(Text("Information about \(ingredient.name)"))
             }
         }
         .onTapGesture {
@@ -183,6 +199,10 @@ struct MakeView: View {
         .conditionalDrag(isEnabled: !isUsed && isUnlocked) {
             viewModel.dragIdentifier(for: ingredient)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(ingredientAccessibilityLabel(for: ingredient)))
+        .accessibilityHint(Text(paletteAccessibilityHint(isUnlocked: isUnlocked, isUsed: isUsed)))
+        .accessibilityAddTraits(.isButton)
     }
     
     private var gimbapBoard: some View {
@@ -192,7 +212,7 @@ struct MakeView: View {
                     .font(.cursive(.bold, size: 44))
                 Spacer()
                 Text("Total \(viewModel.gimbapLayers.count) layers")
-                    .font(.cursive(.medium, size: 24))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.black.opacity(0.6))
             }
             
@@ -200,12 +220,13 @@ struct MakeView: View {
                 Image("GimBapBase")
                     .resizable()
                     .scaledToFit()
+                    .accessibilityHidden(true)
                     .padding(.horizontal, 40)
                     .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 20)
                 
                 if viewModel.gimbapLayers.isEmpty {
                     Text("Drag ingredients to build your own soundscape")
-                        .font(.cursive(.medium, size: 30))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.black.opacity(0.5))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 80)
@@ -246,7 +267,7 @@ struct MakeView: View {
     }
     
     private var ingredientOverlay: some View {
-        VStack(spacing: -28) {
+        VStack(spacing: boardLayerSpacing) {
             ForEach(viewModel.gimbapLayers) { placement in
                 interactiveLayer(for: placement)
             }
@@ -257,11 +278,16 @@ struct MakeView: View {
     }
     
     private func interactiveLayer(for placement: IngredientPlacement) -> some View {
-        Group {
+        let ingredient = placement.ingredient
+        return Group {
             if let asset = placement.ingredient.imageAssetName {
+                let scaledHeight = boardLayerHeight * ingredient.boardLayerScale
                 Image(asset)
                     .resizable()
                     .scaledToFit()
+                    .frame(height: scaledHeight)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityHidden(true)
             } else {
                 layerView(for: placement)
             }
@@ -272,11 +298,16 @@ struct MakeView: View {
         .conditionalDrag(isEnabled: true) {
             viewModel.dragIdentifier(for: placement)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(ingredientAccessibilityLabel(for: ingredient)))
+        .accessibilityHint(Text("Double tap to highlight. Drag to trash to remove."))
+        .accessibilityAddTraits(.isButton)
     }
     
     private func layerView(for placement: IngredientPlacement) -> some View {
         HStack(spacing: 12) {
             Text(placement.ingredient.icon)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: -2) {
                 Text(placement.ingredient.name)
                     .font(.cursive(.bold, size: 26))
@@ -287,7 +318,7 @@ struct MakeView: View {
             Spacer()
         }
         .padding(.horizontal, 20)
-        .frame(height: 58)
+        .frame(height: boardLayerHeight * placement.ingredient.boardLayerScale)
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
@@ -307,6 +338,9 @@ struct MakeView: View {
         .conditionalDrag(isEnabled: true) {
             viewModel.dragIdentifier(for: placement)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(ingredientAccessibilityLabel(for: placement.ingredient)))
+        .accessibilityHint(Text("Double tap to highlight. Drag to trash to remove."))
     }
     
     private var trashDropArea: some View {
@@ -314,7 +348,7 @@ struct MakeView: View {
             Image(systemName: "trash")
                 .font(.system(size: 26, weight: .semibold))
             Text("Drop layers here to delete them")
-                .font(.cursive(.medium, size: 26))
+                .font(.system(size: 18))
         }
         .padding(.horizontal, 28)
         .padding(.vertical, 16)
@@ -324,6 +358,9 @@ struct MakeView: View {
         .onDrop(of: [viewModel.dropType], isTargeted: $trashIsTargeted) { providers in
             viewModel.handleDrop(providers, destination: .trash)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Trash area"))
+        .accessibilityHint(Text("Drag layers here to delete them"))
     }
     
     private var rollButton: some View {
@@ -351,6 +388,22 @@ struct MakeView: View {
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.black.opacity(0.6))
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text(viewModel.canRoll ? "Double tap to save and name your gimbap." : "Add at least one ingredient to roll."))
+    }
+    
+    private func ingredientAccessibilityLabel(for ingredient: Ingredient) -> String {
+        "\(ingredient.name), instrument: \(ingredient.instrument)"
+    }
+    
+    private func paletteAccessibilityHint(isUnlocked: Bool, isUsed: Bool) -> String {
+        if !isUnlocked {
+            return "Locked ingredient. Double tap to learn how to unlock."
+        }
+        if isUsed {
+            return "Already added to the board."
+        }
+        return "Double tap to select. Long press to drag onto the board."
     }
 }
 
@@ -378,5 +431,5 @@ private extension View {
 }
 
 #Preview {
-    MakeView()
+    MakeView(router: Router())
 }

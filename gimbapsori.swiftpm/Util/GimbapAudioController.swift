@@ -94,6 +94,19 @@ final class GimbapAudioController: NSObject, ObservableObject {
         isPlaying = false
         isPrepared = false
     }
+
+    var normalizedProgress: Double {
+        guard let player = players.first, player.duration > 0 else { return 0 }
+        return player.currentTime / player.duration
+    }
+
+    func seek(to progress: Double) {
+        let clamped = max(0, min(1, progress))
+        for player in players {
+            guard player.duration > 0 else { continue }
+            player.currentTime = clamped * player.duration
+        }
+    }
     
     private func makePlayer(for name: String) -> AVAudioPlayer? {
         let supportedExtensions = ["wav", "mp3", "m4a"]

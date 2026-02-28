@@ -62,7 +62,7 @@ final class Router: ObservableObject {
         case .description:
             DescriptionView(router: self)
         case .make:
-            MakeView()
+            MakeView(router: self)
         case .ingredientIntroduce:
             IngredientIntroduceView(router: self)
         case .ingredientStory(let progress):

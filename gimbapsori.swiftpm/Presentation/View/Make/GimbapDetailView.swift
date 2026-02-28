@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GimbapDetailView: View {
     let gimbap: CompletedGimbap
+    let router: Router?
     let onClose: () -> Void
     let onNameChange: (String) -> Void
     @StateObject private var audioController = GimbapAudioController()
@@ -82,9 +83,11 @@ struct GimbapDetailView: View {
                         )
                         .font(.system(size: 20, weight: .semibold))
                     infoRow(title: "Created", value: gimbap.createdAt.formatted(date: .abbreviated, time: .shortened))
+                        .padding(.leading, 12)
                     infoRow(title: "Layers", value: "\(gimbap.ingredients.count) instruments")
-                    progressBar
+                        .padding(.leading, 12)
                 }
+                .padding(.leading, 12)
             }
         }
         .padding(28)
@@ -100,22 +103,27 @@ struct GimbapDetailView: View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Layers in this roll")
                 .font(.cursive(.bold, size: 32))
-            ForEach(gimbap.ingredients) { ingredient in
-                HStack(spacing: 12) {
-                    Text(ingredient.icon)
-                        .font(.system(size: 26))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(ingredient.name)
-                            .font(.system(size: 18, weight: .semibold))
-                        Text(ingredient.instrument)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.black.opacity(0.6))
+            let columnCount = max(1, min(7, gimbap.ingredients.count))
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columnCount), spacing: 16) {
+                ForEach(gimbap.ingredients) { ingredient in
+                    VStack(spacing: 10) {
+                        Image(ingredient.instrumentImageAssetName ?? "")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 100)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        VStack(spacing: 2) {
+                            Text(ingredient.instrument)
+                                .font(.system(size: 16, weight: .semibold))
+                            Text(ingredient.name)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.black.opacity(0.6))
+                        }
                     }
-                    Spacer()
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 14)
-                .background(Color.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             }
         }
         .padding(28)
@@ -151,17 +159,6 @@ struct GimbapDetailView: View {
                 .opacity(audioController.isPrepared ? 1 : 0.4)
             }
             .disabled(!audioController.isPrepared)
-            if !audioController.activeTrackNames.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Tracks playing right now")
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.black.opacity(0.7))
-                    ForEach(audioController.activeTrackNames, id: \.self) { track in
-                        Text(track)
-                            .font(.system(size: 15, weight: .medium))
-                    }
-                }
-            }
         }
         .padding(28)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 48, style: .continuous))
@@ -182,28 +179,9 @@ struct GimbapDetailView: View {
         }
     }
     
-    private var progressBar: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Rolling progress")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.black.opacity(0.55))
-            GeometryReader { proxy in
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.black.opacity(0.08))
-                    .overlay(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(LinearGradient(colors: [Color(hex: "050505"), Color(hex: "2D2D2D")], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: proxy.size.width * rollProgress)
-                            .animation(.easeInOut(duration: 1.6), value: rollProgress)
-                    }
-            }
-            .frame(height: 10)
-        }
-    }
-
     private var primaryButton: some View {
-        Button(action: onClose) {
-            Text("Back to Making")
+        Button(action: handleBackToMain) {
+            Text("Back to Main")
                 .font(.cursive(.bold, size: 30))
                 .foregroundColor(.black)
                 .padding(.horizontal, 60)
@@ -219,7 +197,7 @@ struct GimbapDetailView: View {
         }
         .padding(.bottom, 24)
     }
-    
+
     private func animateRoll() {
         rollProgress = 0
         withAnimation(.easeInOut(duration: 1.6)) {
@@ -227,6 +205,12 @@ struct GimbapDetailView: View {
         }
     }
     
+    private func handleBackToMain() {
+        onClose()
+        router?.popToRoot()
+        router?.push(.main)
+    }
+
     private var boardPreview: some View {
         ZStack {
             Image("GimBapBase")
@@ -258,10 +242,11 @@ struct GimbapDetailView: View {
     private func boardLayer(for ingredient: Ingredient) -> some View {
         Group {
             if let asset = ingredient.imageAssetName {
+                let height = 110 * ingredient.boardLayerScale
                 Image(asset)
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 110)
+                    .frame(height: height)
                     .frame(maxWidth: .infinity)
             } else {
                 HStack(spacing: 12) {
@@ -276,7 +261,7 @@ struct GimbapDetailView: View {
                     Spacer()
                 }
                 .padding(.horizontal, 26)
-                .frame(height: 68)
+                .frame(height: 68 * ingredient.boardLayerScale)
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
@@ -305,5 +290,5 @@ struct GimbapDetailView: View {
 }
 
 #Preview {
-    GimbapDetailView(gimbap: CompletedGimbap(ingredients: Ingredient.palette), onClose: {}, onNameChange: { _ in })
+    GimbapDetailView(gimbap: CompletedGimbap(ingredients: Ingredient.palette), router: Router(), onClose: {}, onNameChange: { _ in })
 }
