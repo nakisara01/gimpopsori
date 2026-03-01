@@ -47,7 +47,13 @@ struct MainView: View {
         Button(action: action) {
             ZStack {
                 RoundedRectangle(cornerRadius: 80)
-                    .fill(Color.white)
+                    .fill(
+                        Color(
+                            red: 245/255,
+                            green: 233/255,
+                            blue: 209/255
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 80)
                             .stroke(Color.black, lineWidth: 3)
@@ -75,14 +81,14 @@ struct MainView: View {
                         .foregroundStyle(Color.gray)
                         .font(.system(size: 24, weight: .regular))
                         .multilineTextAlignment(.center)
-                        .padding(.top, 40)
+                        .padding(.top, 50)
                         .padding(.horizontal, 20)
                     
                     Spacer()
                 }
             }
         }
-        .frame(width: 300, height: 600)
+        .frame(width: 350, height: 600)
     }
 }
 

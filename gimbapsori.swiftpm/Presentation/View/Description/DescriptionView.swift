@@ -18,6 +18,7 @@ struct DescriptionView: View {
                 .scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
             
             Color.white.opacity(0.6)
                 .ignoresSafeArea()
@@ -136,8 +137,10 @@ private struct HistoryCardView: View {
             RoundedRectangle(cornerRadius: 32)
                 .stroke(Color.black.opacity(0.08), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("\(gimbap.name), saved on \(gimbap.createdAt.formatted(date: .abbreviated, time: .shortened)), 총 \(gimbap.ingredients.count)개의 재료"))
         .onReceive(timer) { _ in updateProgress() }
-    }
+    }  
 
     private var boardPreview: some View {
         ZStack {
@@ -145,6 +148,7 @@ private struct HistoryCardView: View {
                 .resizable()
                 .scaledToFit()
                 .shadow(color: Color.black.opacity(0.18), radius: 14, x: 0, y: 10)
+                .accessibilityHidden(true)
             if gimbap.ingredients.isEmpty {
                 Text("No layers")
                     .font(.system(size: 18, weight: .medium))
@@ -164,6 +168,7 @@ private struct HistoryCardView: View {
             }
         }
         .clipped()
+        .accessibilityHidden(true)
     }
 
     private func boardLayer(for ingredient: Ingredient) -> some View {
@@ -234,6 +239,8 @@ private struct HistoryCardView: View {
                 }
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("사용된 악기: \(gimbap.ingredients.map { $0.instrument }.joined(separator: ", "))"))
     }
 
     private var playbackControls: some View {
@@ -246,6 +253,8 @@ private struct HistoryCardView: View {
                         .font(.system(size: 32))
                         .foregroundColor(.black)
                 }
+                .accessibilityLabel(Text(audioController.isPlaying ? "재생 일시정지" : "재생"))
+                .accessibilityHint(Text("김밥 믹스를 다시 들어봅니다."))
                 Slider(
                     value: Binding(
                         get: { playbackProgress },
@@ -264,6 +273,7 @@ private struct HistoryCardView: View {
                         }
                     }
                 )
+                .accessibilityLabel(Text("재생 위치"))
             }
         }
     }

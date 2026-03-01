@@ -122,7 +122,11 @@ struct GimbapDetailView: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.85), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .background(Color(
+                        red: 245/255,
+                        green: 233/255,
+                        blue: 209/255
+                    ), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
             }
         }

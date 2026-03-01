@@ -25,6 +25,7 @@ struct IngredientIntroduceView: View {
                 .scaledToFill()
                 .opacity(0.12)
                 .ignoresSafeArea()
+                .accessibilityHidden(true)
             
             ScrollView {
                 VStack(spacing: 32) {
@@ -82,6 +83,7 @@ struct IngredientIntroduceView: View {
                         .scaledToFit()
                         .frame(width: 180, height: 60)
                         .padding(.trailing, 12)
+                        .accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Ingredients")
@@ -101,6 +103,7 @@ struct IngredientIntroduceView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 180, height: 60)
+                        .accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Instrument")
@@ -127,6 +130,8 @@ struct IngredientIntroduceView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     }
+                    .accessibilityLabel(Text(highlightedIngredientID == ingredient.id && audioController.isPlaying ? "데모 일시정지" : "데모 재생"))
+                    .accessibilityHint(Text("\(ingredient.instrument) 소리를 미리 들어봅니다."))
                 }
                 Spacer()
             }
@@ -137,6 +142,9 @@ struct IngredientIntroduceView: View {
             RoundedRectangle(cornerRadius: 48)
                 .stroke(highlightedIngredientID == ingredient.id ? ingredient.accentColor : Color.black.opacity(0.05), lineWidth: 2)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("\(ingredient.name), 악기: \(ingredient.instrument)"))
+        .accessibilityHint(Text("설명을 살펴보고 데모를 재생할 수 있습니다."))
     }
     
     private func stageBadge(number: Int) -> some View {
