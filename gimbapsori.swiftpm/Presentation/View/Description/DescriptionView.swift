@@ -106,6 +106,10 @@ private struct HistoryCardView: View {
     @StateObject private var audioController = GimbapAudioController()
     @State private var playbackProgress: Double = 0
     @State private var isScrubbing: Bool = false
+    @State private var isExporting: Bool = false
+    @State private var shareItem: ShareItem?
+    @State private var exportErrorMessage: String?
+    private let exporter = GimbapAudioExporter()
     private let timer = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -140,7 +144,17 @@ private struct HistoryCardView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("\(gimbap.name), saved on \(gimbap.createdAt.formatted(date: .abbreviated, time: .shortened)), 총 \(gimbap.ingredients.count)개의 재료"))
         .onReceive(timer) { _ in updateProgress() }
-    }  
+        .sheet(item: $shareItem) { item in
+            ShareSheet(items: [item.url])
+        }
+        .alert("내보내기 실패", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
+            Button("확인") {
+                exportErrorMessage = nil
+            }
+        } message: {
+            Text(exportErrorMessage ?? "알 수 없는 오류")
+        }
+    }
 
     private var boardPreview: some View {
         ZStack {
@@ -275,6 +289,27 @@ private struct HistoryCardView: View {
                 )
                 .accessibilityLabel(Text("재생 위치"))
             }
+            Button(action: exportMix) {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text(isExporting ? "Exporting..." : "Export audio")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
+                .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            }
+            .disabled(isExporting || gimbap.ingredients.isEmpty)
+            .opacity((isExporting || gimbap.ingredients.isEmpty) ? 0.4 : 1)
+            if isExporting {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("내보내는 동안 잠깐 믹스가 재생될 수 있어요")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.black.opacity(0.7))
+                }
+            }
         }
     }
 
@@ -291,6 +326,20 @@ private struct HistoryCardView: View {
     private func updateProgress() {
         guard audioController.isPlaying, !isScrubbing else { return }
         playbackProgress = audioController.normalizedProgress
+    }
+
+    private func exportMix() {
+        guard !isExporting else { return }
+        isExporting = true
+        exporter.exportMix(for: gimbap.ingredients, fileName: gimbap.name) { result in
+            isExporting = false
+            switch result {
+            case .success(let url):
+                shareItem = ShareItem(url: url)
+            case .failure(let error):
+                exportErrorMessage = error.localizedDescription
+            }
+        }
     }
 }
 

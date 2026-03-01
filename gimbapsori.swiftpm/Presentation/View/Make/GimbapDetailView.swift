@@ -13,9 +13,13 @@ struct GimbapDetailView: View {
     let onClose: () -> Void
     let onNameChange: (String) -> Void
     @StateObject private var audioController = GimbapAudioController()
+    private let exporter = GimbapAudioExporter()
     @State private var rollProgress: CGFloat = 0
     @State private var gimbapName: String = ""
     @State private var savedName: String = ""
+    @State private var isExportingAudio: Bool = false
+    @State private var shareItem: ShareItem?
+    @State private var exportErrorMessage: String?
     private let storage = GimbapStorage.shared
     
     var body: some View {
@@ -53,6 +57,16 @@ struct GimbapDetailView: View {
         }
         .onChange(of: gimbapName) { newValue in
             persistName(newValue)
+        }
+        .sheet(item: $shareItem) { item in
+            ShareSheet(items: [item.url])
+        }
+        .alert("내보내기 실패", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
+            Button("확인") {
+                exportErrorMessage = nil
+            }
+        } message: {
+            Text(exportErrorMessage ?? "알 수 없는 오류")
         }
     }
     
@@ -163,6 +177,29 @@ struct GimbapDetailView: View {
                 .opacity(audioController.isPrepared ? 1 : 0.4)
             }
             .disabled(!audioController.isPrepared)
+            Button(action: exportMix) {
+                HStack(spacing: 10) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text(isExportingAudio ? "Exporting..." : "Export audio")
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .foregroundColor(.black)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            }
+            .disabled(isExportingAudio || gimbap.ingredients.isEmpty)
+            .opacity((isExportingAudio || gimbap.ingredients.isEmpty) ? 0.4 : 1)
+            if isExportingAudio {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.9)
+                    Text("내보내는 동안 짧게 사운드가 재생될 수 있어요")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.black.opacity(0.7))
+                }
+            }
         }
         .padding(28)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 48, style: .continuous))
@@ -242,7 +279,7 @@ struct GimbapDetailView: View {
         .frame(width: 320, height: 260)
         .clipped()
     }
-    
+
     private func boardLayer(for ingredient: Ingredient) -> some View {
         Group {
             if let asset = ingredient.imageAssetName {
@@ -279,6 +316,20 @@ struct GimbapDetailView: View {
                     RoundedRectangle(cornerRadius: 28)
                         .stroke(Color.white.opacity(0.4), lineWidth: 1)
                 )
+            }
+        }
+    }
+    
+    private func exportMix() {
+        guard !isExportingAudio else { return }
+        isExportingAudio = true
+        exporter.exportMix(for: gimbap.ingredients, fileName: gimbap.name) { result in
+            isExportingAudio = false
+            switch result {
+            case .success(let url):
+                shareItem = ShareItem(url: url)
+            case .failure(let error):
+                exportErrorMessage = error.localizedDescription
             }
         }
     }

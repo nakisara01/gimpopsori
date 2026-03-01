@@ -14,6 +14,7 @@ enum Route: Hashable {
     case make
     case ingredientIntroduce
     case ingredientStory(IngredientStoryProgress)
+    case copyright
 }
 
 struct RouteWrapper: Hashable {
@@ -67,6 +68,8 @@ final class Router: ObservableObject {
             IngredientIntroduceView(router: self)
         case .ingredientStory(let progress):
             IngredientStoryView(router: self, progress: progress)
+        case .copyright:
+            CopyrightView(router: self)
         }
     }
 }

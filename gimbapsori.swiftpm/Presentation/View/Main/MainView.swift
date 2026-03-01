@@ -25,7 +25,17 @@ struct MainView: View {
             Color.white.opacity(0.6)
                 .edgesIgnoringSafeArea(.all)
             
-            VStack(spacing: 60) {
+            VStack(spacing: 40) {
+                HStack {
+                    Spacer()
+                    Button(action: { router.push(.copyright) }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(10)
+                            .background(Color.white.opacity(0.9), in: Circle())
+                    }
+                }
                 HStack(spacing: 60) {
                     mainButton(title: "Go To Kitchen", image: "GoToKitchen", description: GoToKitchenDescription) {
                         router.push(.make)

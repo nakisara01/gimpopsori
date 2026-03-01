@@ -25,15 +25,6 @@ final class GimbapAudioController: NSObject, ObservableObject {
     }
     
     private let baseTrack = AudioTrack(resourceName: "GimbapBase", displayName: "Gimbap Base", volume: 0.7)
-    private let instrumentResourceMap: [String: String] = [
-        "Taepyeongso": "Taepyeongso",
-        "Daegeum": "Daegeum",
-        "Haegeum": "Haegeum",
-        "Piri": "Piri",
-        "Ajaeng": "Ajeng",
-        "Gayageum": "Gayageum",
-        "Geomungo": "Geomungo"
-    ]
     private let instrumentSampleResourceMap: [String: String] = [
         "Piri": "Piri_Sample"
     ]
@@ -142,12 +133,12 @@ final class GimbapAudioController: NSObject, ObservableObject {
         let resourceName: String
         switch variant {
         case .ensemble:
-            guard let resource = instrumentResourceMap[ingredient.instrument] else { return nil }
+            guard let resource = ingredient.audioTrackResourceName else { return nil }
             resourceName = resource
         case .demo:
             if let sample = instrumentSampleResourceMap[ingredient.instrument] {
                 resourceName = sample
-            } else if let resource = instrumentResourceMap[ingredient.instrument] {
+            } else if let resource = ingredient.audioTrackResourceName {
                 resourceName = resource
             } else {
                 return nil

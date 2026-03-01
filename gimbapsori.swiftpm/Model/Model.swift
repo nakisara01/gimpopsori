@@ -45,6 +45,19 @@ struct Ingredient: Identifiable, Hashable, Codable {
         default: return "InstrumentPlaceholder"
         }
     }
+
+    var audioTrackResourceName: String? {
+        switch instrument {
+        case "Taepyeongso": return "Taepyeongso"
+        case "Daegeum": return "Daegeum"
+        case "Haegeum": return "Haegeum"
+        case "Piri": return "Piri"
+        case "Ajaeng": return "Ajaeng"
+        case "Gayageum": return "Gayageum"
+        case "Geomungo": return "Geomungo"
+        default: return nil
+        }
+    }
     
     var boardLayerScale: CGFloat {
         switch id {
