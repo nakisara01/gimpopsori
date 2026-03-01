@@ -27,7 +27,7 @@ struct InitialView: View {
                     .scaledToFit()
                     .padding(.horizontal, 100)
                 
-                HStack(spacing: 24) {
+                VStack {
                     Button(action: {
                         router.push(.main)
                     }, label: {
@@ -41,30 +41,26 @@ struct InitialView: View {
                                 .padding(.top, 30)
                         }
                     })
-                    .frame(maxWidth: 400)
+                    .frame(maxWidth: 100, maxHeight: 150)
                     
                     Button(action: {
                         router.push(.copyright)
                     }, label: {
                         VStack(spacing: 6) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.system(size: 42, weight: .semibold))
-                            Text("Credits")
+                            Text("License & Credits")
                                 .font(.system(size: 22, weight: .semibold))
                         }
                         .foregroundColor(.black)
                         .padding(24)
-                        .frame(minWidth: 180)
                         .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 40, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 40)
                                 .stroke(Color.black.opacity(0.2), lineWidth: 2)
                         )
                     })
+                    .padding(.bottom, 200)
+                    .padding(.top, 50)
                 }
-                .padding(.top, 100)
-                .padding(.horizontal, 80)
-                .padding(.bottom, 300)
             }
         }
     }

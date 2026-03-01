@@ -68,6 +68,7 @@ struct MakeView: View {
             IngredientUnlockView(
                 ingredient: ingredient,
                 isNext: viewModel.isNextToUnlock(ingredient),
+                isUnlocked: viewModel.isIngredientUnlocked(ingredient),
                 onUnlock: {
                     viewModel.unlock(ingredient)
                     presentedIngredientForUnlock = nil

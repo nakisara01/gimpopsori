@@ -142,17 +142,17 @@ private struct HistoryCardView: View {
                 .stroke(Color.black.opacity(0.08), lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("\(gimbap.name), saved on \(gimbap.createdAt.formatted(date: .abbreviated, time: .shortened)), 총 \(gimbap.ingredients.count)개의 재료"))
+        .accessibilityLabel(Text("\(gimbap.name), saved on \(gimbap.createdAt.formatted(date: .abbreviated, time: .shortened)), \(gimbap.ingredients.count) Ingredient"))
         .onReceive(timer) { _ in updateProgress() }
         .sheet(item: $shareItem) { item in
             ShareSheet(items: [item.url])
         }
-        .alert("내보내기 실패", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
-            Button("확인") {
+        .alert("Export Failed", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
+            Button("Accept") {
                 exportErrorMessage = nil
             }
         } message: {
-            Text(exportErrorMessage ?? "알 수 없는 오류")
+            Text(exportErrorMessage ?? "Unidentified Error")
         }
     }
 
@@ -254,7 +254,7 @@ private struct HistoryCardView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("사용된 악기: \(gimbap.ingredients.map { $0.instrument }.joined(separator: ", "))"))
+        .accessibilityLabel(Text("Instrument used: \(gimbap.ingredients.map { $0.instrument }.joined(separator: ", "))"))
     }
 
     private var playbackControls: some View {
@@ -267,8 +267,8 @@ private struct HistoryCardView: View {
                         .font(.system(size: 32))
                         .foregroundColor(.black)
                 }
-                .accessibilityLabel(Text(audioController.isPlaying ? "재생 일시정지" : "재생"))
-                .accessibilityHint(Text("김밥 믹스를 다시 들어봅니다."))
+                .accessibilityLabel(Text(audioController.isPlaying ? "play stop" : "play"))
+                .accessibilityHint(Text("Let's listen to the gimbap mix again."))
                 Slider(
                     value: Binding(
                         get: { playbackProgress },
@@ -287,7 +287,7 @@ private struct HistoryCardView: View {
                         }
                     }
                 )
-                .accessibilityLabel(Text("재생 위치"))
+                .accessibilityLabel(Text("PlayHead"))
             }
             Button(action: exportMix) {
                 HStack(spacing: 8) {
@@ -305,7 +305,7 @@ private struct HistoryCardView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.8)
-                    Text("내보내는 동안 잠깐 믹스가 재생될 수 있어요")
+                    Text("You can play the sound for a short time while you're playing it.")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.black.opacity(0.7))
                 }

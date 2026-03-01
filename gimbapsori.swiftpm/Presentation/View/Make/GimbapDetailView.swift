@@ -61,12 +61,12 @@ struct GimbapDetailView: View {
         .sheet(item: $shareItem) { item in
             ShareSheet(items: [item.url])
         }
-        .alert("내보내기 실패", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
-            Button("확인") {
+        .alert("Export Failed", isPresented: Binding(get: { exportErrorMessage != nil }, set: { _ in exportErrorMessage = nil })) {
+            Button("Accept") {
                 exportErrorMessage = nil
             }
         } message: {
-            Text(exportErrorMessage ?? "알 수 없는 오류")
+            Text(exportErrorMessage ?? "Unidentified Error")
         }
     }
     
@@ -195,7 +195,7 @@ struct GimbapDetailView: View {
                 HStack(spacing: 8) {
                     ProgressView()
                         .scaleEffect(0.9)
-                    Text("내보내는 동안 짧게 사운드가 재생될 수 있어요")
+                    Text("You can play the sound for a short time while you're playing it")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.black.opacity(0.7))
                 }

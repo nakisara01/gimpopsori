@@ -11,6 +11,7 @@ import AVFoundation
 struct IngredientUnlockView: View {
     let ingredient: Ingredient
     let isNext: Bool
+    let isUnlocked: Bool
     let onUnlock: () -> Void
     let onClose: () -> Void
     @State private var samplePlayer: AVAudioPlayer?
@@ -22,9 +23,10 @@ struct IngredientUnlockView: View {
     @State private var hasSamplePlayed: Bool = false
     private let scene: IngredientStoryScene
     
-    init(ingredient: Ingredient, isNext: Bool, onUnlock: @escaping () -> Void, onClose: @escaping () -> Void) {
+    init(ingredient: Ingredient, isNext: Bool, isUnlocked: Bool, onUnlock: @escaping () -> Void, onClose: @escaping () -> Void) {
         self.ingredient = ingredient
         self.isNext = isNext
+        self.isUnlocked = isUnlocked
         self.onUnlock = onUnlock
         self.onClose = onClose
         self.scene = IngredientStoryScene.allScenes.first { $0.ingredient.id == ingredient.id } ?? IngredientStoryScene(ingredient: ingredient, dialogues: [], instrumentInsight: "")
@@ -156,7 +158,13 @@ struct IngredientUnlockView: View {
     
     private var actionButtons: some View {
         VStack(spacing: 18) {
-            if !isNext {
+            if isUnlocked {
+                Text("\(ingredient.name) is already Unlocked.")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.black.opacity(0.6))
+                    .padding()
+                    .background(Color.white.opacity(0.9), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+            } else if !isNext {
                 Text("Unlock earlier stages before \(ingredient.name).")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.black.opacity(0.6))
@@ -167,7 +175,7 @@ struct IngredientUnlockView: View {
                 Button(action: {
                     if isNext && hasSamplePlayed { onUnlock() }
                 }) {
-                    Text(!isNext ? "Locked" : (hasSamplePlayed ? "Unlock Ingredient" : "Listen first"))
+                    Text(primaryButtonTitle)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -190,6 +198,18 @@ struct IngredientUnlockView: View {
                 }
                 .accessibilityHint(Text("Return to the kitchen."))
             }
+        }
+    }
+
+    private var primaryButtonTitle: String {
+        if isUnlocked {
+            return "Already Unlocked"
+        } else if !isNext {
+            return "Locked"
+        } else if hasSamplePlayed {
+            return "Unlock Ingredient"
+        } else {
+            return "Listen first"
         }
     }
     
@@ -319,5 +339,5 @@ struct IngredientUnlockView: View {
 }
 
 #Preview {
-    IngredientUnlockView(ingredient: Ingredient.palette.first!, isNext: true, onUnlock: {}, onClose: {})
+    IngredientUnlockView(ingredient: Ingredient.palette.first!, isNext: true, isUnlocked: false, onUnlock: {}, onClose: {})
 }
