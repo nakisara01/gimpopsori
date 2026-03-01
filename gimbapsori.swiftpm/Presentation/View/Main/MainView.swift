@@ -10,6 +10,10 @@ import SwiftUI
 struct MainView: View {
     let router: Router
     
+    let GoToKitchenDescription = "Create your own gugak by mixing gimbap ingredients and layering traditional instrument sounds."
+    let IngredientIntroDescription = "Learn how each ingredient connects to a traditional Korean instrument and its unique sound."
+    let GimBapDescription = "Explore the gimbap combinations you’ve created and listen to your layered gugak compositions."
+    
     var body: some View {
         ZStack {
             Image("GimPopSori_Background")
@@ -23,13 +27,13 @@ struct MainView: View {
             
             VStack(spacing: 60) {
                 HStack(spacing: 60) {
-                    mainButton(title: "Go To Kitchen") {
+                    mainButton(title: "Go To Kitchen", image: "GoToKitchen", description: GoToKitchenDescription) {
                         router.push(.make)
                     }
-                    mainButton(title: "Ingredient Intro") {
+                    mainButton(title: "Ingredient Intro", image: "IngredientIntro", description: IngredientIntroDescription) {
                         router.push(.ingredientIntroduce)
                     }
-                    mainButton(title: "Gimbap List") {
+                    mainButton(title: "Gimbap List", image: "GimBapList", description: GimBapDescription) {
                         router.push(.description)
                     }
                 }
@@ -39,22 +43,46 @@ struct MainView: View {
         }
     }
     
-    private func mainButton(title: String, action: @escaping () -> Void) -> some View {
+    private func mainButton(title: String, image: String, description: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             ZStack {
                 RoundedRectangle(cornerRadius: 80)
                     .fill(Color.white)
                     .overlay(
                         RoundedRectangle(cornerRadius: 80)
-                            .stroke(Color.black, lineWidth: 8)
+                            .stroke(Color.black, lineWidth: 3)
                     )
-                Text(title)
-                    .foregroundStyle(Color.black)
-                    .font(.cursive(.bold, size: 70))
-                    .padding(.top, 20)
+                VStack(spacing: 0) {
+                    
+                    Image(image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 280, height: 230)
+                        .padding(.top, 30)
+                    
+                    Text(title)
+                        .foregroundStyle(Color.black)
+                        .font(.cursive(.bold, size: 70))
+                        .padding(.top, 20)
+                    
+                    VStack {
+                        Color.gray
+                            .frame(height: 1)
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Text(description)
+                        .foregroundStyle(Color.gray)
+                        .font(.system(size: 24, weight: .regular))
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 40)
+                        .padding(.horizontal, 20)
+                    
+                    Spacer()
+                }
             }
         }
-        .frame(width: 260, height: 320)
+        .frame(width: 300, height: 600)
     }
 }
 
